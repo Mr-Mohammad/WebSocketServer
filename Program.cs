@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -26,7 +27,12 @@ async Task EchoLoop(WebSocket webSocket)
 
     while (!result.CloseStatus.HasValue)
     {
+        string filePath = "DataBase.json";
         var receivedText = Encoding.UTF8.GetString(buffer, 0, result.Count);
+
+
+        SaveTextToJsonFile(receivedText, filePath);
+
         Console.WriteLine($"Received: {receivedText}");
 
         var sendText = Encoding.UTF8.GetBytes($"Echo: {receivedText}");
@@ -37,5 +43,24 @@ async Task EchoLoop(WebSocket webSocket)
 
     await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
 }
+static void SaveTextToJsonFile(string text, string filePath)
+{
+    var textMessage = new TextMessage
+    {
+        Timestamp = DateTime.Now,
+        Content = text
+    };
 
+    using (StreamWriter writer = new StreamWriter(filePath, true))
+    {
+        writer.WriteLine(JsonConvert.SerializeObject(textMessage));
+        writer.WriteLine();
+    }
+}
 app.Run("http://localhost:8855");
+
+public class TextMessage
+{
+    public DateTime Timestamp { get; set; }
+    public string Content { get; set; }
+}
